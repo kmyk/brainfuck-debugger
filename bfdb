@@ -99,54 +99,68 @@ class Debugger(object):
     def onbreakpoint(self):
         return self.eof() or (self.pptr != 0 and self.code[self.pptr - 1] == ord('#'))
 
-class Monitor(object):
+class Renderer(object):
     def __init__(self, debugger, scr):
         self.debugger = debugger
         self.scr = scr
 
     def __call__(self):
-        debugger = self.debugger
         scr = self.scr
-
         scr.erase()
         height, width = scr.getmaxyx()
         y = 0
-        # code
-        for x in range(width):
-            i = debugger.pptr + x - width // 2
-            if 0 <= i < len(debugger.code):
-                scr.addstr(y, x, chr(debugger.code[i]))
-        scr.addstr(y+1, width//2, '^')
-        scr.addstr(y+2, width//2, 'pptr')
-        y += 3
-        # memory
-        for i in range(width // 3):
-            x = i * 3
-            scr.addstr(y,   x, str(debugger.mem[i]).rjust(3))
-            scr.addstr(y+1, x, chr(debugger.mem[i]).rjust(3))
-        scr.addstr(y+2, debugger.mptr*3+2, '^')
-        scr.addstr(y+3, debugger.mptr*3+2, 'memory')
-        y += 4
-        # input
-        for i in range(width // 3):
-            x = i * 3
-            if 0 <= i < len(debugger.input):
-                scr.addstr(y, x, str(debugger.input[i]).rjust(3))
-                scr.addstr(y+1, x, chr(debugger.input[i]).rjust(3))
-        scr.addstr(y+2, max(0, debugger.inputptr*3+2), '^')
-        scr.addstr(y+3, max(0, debugger.inputptr*3+2), 'input')
-        y += 4
-        # output
-        for i in range(width // 3):
-            x = i * 3
-            if 0 <= i < len(debugger.output):
-                scr.addstr(y, x, str(debugger.output[i]).rjust(3))
-                scr.addstr(y+1, x, chr(debugger.output[i]).rjust(3))
-        scr.addstr(y+2, max(0, len(debugger.output)*3-1), '^')
-        scr.addstr(y+3, max(0, len(debugger.output)*3-1), 'output')
-        y += 4
-        # done
+        y += self.render_code(y, 1, width-2)
+        y += self.render_memory(y, 1, width-2)
+        y += self.render_input(y, 1, width-2)
+        y += self.render_output(y, 1, width-2)
         scr.refresh()
+
+    def render_code(self, y, x, w):
+        debugger = self.debugger
+        scr = self.scr
+        for dx in range(w):
+            i = debugger.pptr + dx - w // 2
+            if 0 <= i < len(debugger.code):
+                scr.addstr(y, x + dx, chr(debugger.code[i]))
+        scr.addstr(y+1, x + w//2, '^')
+        scr.addstr(y+2, x + w//2, 'pptr')
+        return 3
+
+    def render_memory(self, y, x, w):
+        debugger = self.debugger
+        scr = self.scr
+        for i in range(w // 3):
+            dx = i * 3
+            scr.addstr(y,   x + dx, str(debugger.mem[i]).rjust(3))
+            scr.addstr(y+1, x + dx, chr(debugger.mem[i]).rjust(3))
+        scr.addstr(y+2, x + debugger.mptr*3+2, '^')
+        scr.addstr(y+3, x + debugger.mptr*3+2, 'memory')
+        return 4
+
+    def render_input(self, y, x, w):
+        debugger = self.debugger
+        scr = self.scr
+        for i in range(w // 3):
+            dx = i * 3
+            if 0 <= i < len(debugger.input):
+                scr.addstr(y,   x + dx, str(debugger.input[i]).rjust(3))
+                scr.addstr(y+1, x + dx, chr(debugger.input[i]).rjust(3))
+        scr.addstr(y+2, x + max(0, debugger.inputptr*3+2), '^')
+        scr.addstr(y+3, x + max(0, debugger.inputptr*3+2), 'input')
+        return 4
+
+    def render_output(self, y, x, w):
+        debugger = self.debugger
+        scr = self.scr
+        for i in range(w // 3):
+            dx = i * 3
+            if 0 <= i < len(debugger.output):
+                scr.addstr(y,   x + dx, str(debugger.output[i]).rjust(3))
+                scr.addstr(y+1, x + dx, chr(debugger.output[i]).rjust(3))
+        scr.addstr(y+2, x + max(0, len(debugger.output)*3-1), '^')
+        scr.addstr(y+3, x + max(0, len(debugger.output)*3-1), 'output')
+        return 4
+
 
 import curses
 
@@ -155,9 +169,9 @@ def main(stdscr):
     stdscr.nodelay(0)
 
     debugger = Debugger(args.file, args.input, store=args.store)
-    monitor = Monitor(debugger, stdscr)
+    renderer = Renderer(debugger, stdscr)
 
-    monitor()
+    renderer()
 
     def run():
         stdscr.nodelay(1) # no block
@@ -188,6 +202,6 @@ def main(stdscr):
                 if breakp() or debugger.onbreakpoint():
                     stop()
                     break
-        monitor()
+        renderer()
 
 curses.wrapper(main)
