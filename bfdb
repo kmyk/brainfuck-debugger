@@ -159,30 +159,34 @@ def main(stdscr):
 
     monitor()
 
+    def run():
+        stdscr.nodelay(1) # no block
+    def stop():
+        stdscr.nodelay(0) # block
+    breakp = lambda: False
+
     while True:
         c = stdscr.getch()
-        if c != -1: # timeout
-            stdscr.nodelay(0) # block
         if c == ord('q'):
             break
         elif c == ord('s'):
             debugger.step()
+            stop()
         elif c == ord('n'):
             depth = debugger.depth
-            debugger.step()
-            while not debugger.eof() and depth < debugger.depth:
-                debugger.step()
+            breakp = lambda: debugger.depth <= depth
+            run()
         elif c == ord('u'):
             depth = debugger.depth
-            while not debugger.eof() and depth <= debugger.depth:
-                debugger.step()
+            breakp = lambda: debugger.depth < depth
+            run()
         elif c == ord('c'):
-            stdscr.nodelay(1) # no block
+            run()
         elif c == -1: # timeout
             for i in range(1000):
                 debugger.step()
-                if debugger.onbreakpoint():
-                    stdscr.nodelay(0) # block
+                if breakp() or debugger.onbreakpoint():
+                    stop()
                     break
         monitor()
 
