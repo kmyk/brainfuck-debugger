@@ -133,8 +133,9 @@ class Renderer(object):
             dx = i * 3
             scr.addstr(y,   x + dx, str(debugger.mem[i]).rjust(3))
             scr.addstr(y+1, x + dx, chr(debugger.mem[i]).rjust(3))
-        scr.addstr(y+2, x + debugger.mptr*3+2, '^')
-        scr.addstr(y+3, x + debugger.mptr*3+2, 'memory')
+        if debugger.mptr*3+2 < w:
+            scr.addstr(y+2, x + debugger.mptr*3+2, '^')
+            scr.addstr(y+3, x + debugger.mptr*3+2, 'memory')
         return 4
 
     def render_input(self, y, x, w):
@@ -145,8 +146,9 @@ class Renderer(object):
             if 0 <= i < len(debugger.input):
                 scr.addstr(y,   x + dx, str(debugger.input[i]).rjust(3))
                 scr.addstr(y+1, x + dx, chr(debugger.input[i]).rjust(3))
-        scr.addstr(y+2, x + max(0, debugger.inputptr*3+2), '^')
-        scr.addstr(y+3, x + max(0, debugger.inputptr*3+2), 'input')
+        if debugger.inputptr*3+2 < w:
+            scr.addstr(y+2, x + debugger.inputptr*3+2, '^')
+            scr.addstr(y+3, x + debugger.inputptr*3+2, 'input')
         return 4
 
     def render_output(self, y, x, w):
@@ -157,8 +159,9 @@ class Renderer(object):
             if 0 <= i < len(debugger.output):
                 scr.addstr(y,   x + dx, str(debugger.output[i]).rjust(3))
                 scr.addstr(y+1, x + dx, chr(debugger.output[i]).rjust(3))
-        scr.addstr(y+2, x + max(0, len(debugger.output)*3-1), '^')
-        scr.addstr(y+3, x + max(0, len(debugger.output)*3-1), 'output')
+        if len(debugger.output)*3-1 < w:
+            scr.addstr(y+2, x + max(0, len(debugger.output)*3-1), '^')
+            scr.addstr(y+3, x + max(0, len(debugger.output)*3-1), 'output')
         return 4
 
 
