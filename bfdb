@@ -198,6 +198,7 @@ def main(stdscr):
             breakp = lambda: debugger.depth < depth
             run()
         elif c == ord('c'):
+            breakp = lambda: False
             run()
         elif c == -1: # timeout
             for i in range(1000):
