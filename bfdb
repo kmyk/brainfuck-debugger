@@ -184,28 +184,36 @@ def main(stdscr):
 
     while True:
         c = stdscr.getch()
-        if c == ord('q'):
-            break
-        elif c == ord('s'):
-            debugger.step()
-            stop()
-        elif c == ord('n'):
-            depth = debugger.depth
-            breakp = lambda: debugger.depth <= depth
-            run()
-        elif c == ord('u'):
-            depth = debugger.depth
-            breakp = lambda: debugger.depth < depth
-            run()
-        elif c == ord('c'):
-            breakp = lambda: False
-            run()
-        elif c == -1: # timeout
+        if c == -1: # timeout
             for i in range(1000):
                 debugger.step()
                 if breakp() or debugger.onbreakpoint():
                     stop()
                     break
+        else:
+            c = chr(c)
+            if c == 'q':
+                break
+            elif c == 's':
+                debugger.step()
+                breakp = lambda: False
+                stop()
+            elif c == 'n':
+                depth = debugger.depth
+                breakp = lambda: debugger.depth <= depth
+                run()
+            elif c == 'u':
+                depth = debugger.depth
+                breakp = lambda: debugger.depth < depth
+                run()
+            elif c == 'c':
+                breakp = lambda: False
+                run()
+            elif c == ' ':
+                stop()
+            elif c.isdigit():
+                repeat.append(c)
+                stop()
         renderer()
 
 curses.wrapper(main)
